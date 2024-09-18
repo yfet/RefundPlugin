@@ -24,16 +24,27 @@ final class Version20190517064223 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
+        $databasePlatform = $this->connection->getDatabasePlatform()->getName();
+        $this->abortIf($databasePlatform !== 'mysql' && $databasePlatform !== 'postgresql', 'Migration can only be executed safely on \'mysql\' or \'postgres\'.');
 
-        $this->addSql('ALTER TABLE sylius_refund_refund CHANGE type type VARCHAR(256) NOT NULL COMMENT \'(DC2Type:sylius_refund_refund_type)\'');
+        if ($databasePlatform === 'mysql') {
+            $this->addSql('ALTER TABLE sylius_refund_refund CHANGE type type VARCHAR(256) NOT NULL COMMENT \'(DC2Type:sylius_refund_refund_type)\'');
+        } elseif ($databasePlatform === 'postgresql') {
+            $this->addSql('ALTER TABLE sylius_refund_refund ALTER COLUMN type TYPE VARCHAR(256), ALTER COLUMN type SET NOT NULL');
+            $this->addSql('COMMENT ON COLUMN sylius_refund_refund.type IS \'(DC2Type:sylius_refund_refund_type)\'');
+        }
     }
 
     public function down(Schema $schema): void
     {
         // this down() migration is auto-generated, please modify it to your needs
-        $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
+        $databasePlatform = $this->connection->getDatabasePlatform()->getName();
+        $this->abortIf($databasePlatform !== 'mysql' && $databasePlatform !== 'postgresql', 'Migration can only be executed safely on \'mysql\' or \'postgres\'.');
 
-        $this->addSql('ALTER TABLE sylius_refund_refund CHANGE type type VARCHAR(255) NOT NULL COLLATE utf8_unicode_ci');
+        if ($databasePlatform === 'mysql') {
+            $this->addSql('ALTER TABLE sylius_refund_refund CHANGE type type VARCHAR(255) NOT NULL COLLATE utf8_unicode_ci');
+        } elseif ($databasePlatform === 'postgresql') {
+            $this->addSql('ALTER TABLE sylius_refund_refund ALTER COLUMN type TYPE VARCHAR(255) USING type::VARCHAR COLLATE "utf8_unicode_ci" SET NOT NULL');
+        }
     }
 }

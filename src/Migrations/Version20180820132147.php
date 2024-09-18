@@ -24,16 +24,27 @@ final class Version20180820132147 extends AbstractMigration
     public function up(Schema $schema): void
     {
         // this up() migration is auto-generated, please modify it to your needs
-        $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
+        $databasePlatform = $this->connection->getDatabasePlatform()->getName();
+        $this->abortIf($databasePlatform !== 'mysql' && $databasePlatform !== 'postgresql', 'Migration can only be executed safely on \'mysql\' or \'postgres\'.');
 
-        $this->addSql('ALTER TABLE sylius_refund_payment DROP number');
+        if ($databasePlatform === 'mysql') {
+            $this->addSql('ALTER TABLE sylius_refund_payment DROP number');
+        } elseif ($databasePlatform === 'postgresql') {
+            $this->addSql('ALTER TABLE sylius_refund_payment DROP COLUMN number');
+        }
     }
 
     public function down(Schema $schema): void
     {
         // this down() migration is auto-generated, please modify it to your needs
-        $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
+        $databasePlatform = $this->connection->getDatabasePlatform()->getName();
+        $this->abortIf($databasePlatform !== 'mysql' && $databasePlatform !== 'postgresql', 'Migration can only be executed safely on \'mysql\' or \'postgres\'.');
 
-        $this->addSql('ALTER TABLE sylius_refund_payment ADD number VARCHAR(255) NOT NULL COLLATE utf8_unicode_ci');
+        if ($databasePlatform === 'mysql') {
+            $this->addSql('ALTER TABLE sylius_refund_payment ADD number VARCHAR(255) NOT NULL COLLATE utf8_unicode_ci');
+        } elseif ($databasePlatform === 'postgresql') {
+            $this->addSql('ALTER TABLE sylius_refund_payment ADD COLUMN number VARCHAR(255) NOT NULL');
+            $this->addSql('ALTER TABLE sylius_refund_payment ALTER COLUMN number TYPE VARCHAR(255) USING number::VARCHAR COLLATE "utf8_unicode_ci"');
+        }
     }
 }

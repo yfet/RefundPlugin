@@ -25,17 +25,33 @@ final class Version20200306145439 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
+        $databasePlatform = $this->connection->getDatabasePlatform()->getName();
+        $this->abortIf($databasePlatform !== 'mysql' && $databasePlatform !== 'postgresql', 'Migration can only be executed safely on \'mysql\' or \'postgres\'.');
 
-        $this->addSql('ALTER TABLE sylius_refund_credit_memo CHANGE issued_at issued_at DATETIME NOT NULL');
-        $this->addSql('CREATE UNIQUE INDEX UNIQ_5C4F333196901F54 ON sylius_refund_credit_memo (number)');
+        if ($databasePlatform === 'mysql') {
+            $this->addSql('ALTER TABLE sylius_refund_credit_memo CHANGE issued_at issued_at DATETIME NOT NULL');
+            $this->addSql('CREATE UNIQUE INDEX UNIQ_5C4F333196901F54 ON sylius_refund_credit_memo (number)');
+        } elseif ($databasePlatform === 'postgresql') {
+            $this->addSql('ALTER TABLE sylius_refund_credit_memo ALTER COLUMN issued_at SET NOT NULL');
+            $this->addSql('ALTER TABLE sylius_refund_credit_memo ALTER COLUMN issued_at TYPE TIMESTAMP WITHOUT TIME ZONE');
+            $this->addSql('CREATE UNIQUE INDEX UNIQ_5C4F333196901F54 ON sylius_refund_credit_memo (number)');
+        }
     }
 
     public function down(Schema $schema): void
     {
-        $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
+        $databasePlatform = $this->connection->getDatabasePlatform()->getName();
+        $this->abortIf($databasePlatform !== 'mysql' && $databasePlatform !== 'postgresql', 'Migration can only be executed safely on \'mysql\' or \'postgres\'.');
 
-        $this->addSql('DROP INDEX UNIQ_5C4F333196901F54 ON sylius_refund_credit_memo');
-        $this->addSql('ALTER TABLE sylius_refund_credit_memo CHANGE issued_at issued_at DATETIME DEFAULT NULL');
+        if ($databasePlatform === 'mysql') {
+            $this->addSql('DROP INDEX UNIQ_5C4F333196901F54 ON sylius_refund_credit_memo');
+            $this->addSql('ALTER TABLE sylius_refund_credit_memo CHANGE issued_at issued_at DATETIME DEFAULT NULL');
+        } elseif ($databasePlatform === 'postgresql') {
+            $this->addSql('DROP INDEX IF EXISTS UNIQ_5C4F333196901F54');
+
+            $this->addSql('ALTER TABLE sylius_refund_credit_memo
+               ALTER COLUMN issued_at DROP NOT NULL,
+               ALTER COLUMN issued_at TYPE TIMESTAMP WITHOUT TIME ZONE');
+        }
     }
 }

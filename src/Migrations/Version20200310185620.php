@@ -25,15 +25,27 @@ final class Version20200310185620 extends AbstractMigration
 
     public function up(Schema $schema): void
     {
-        $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
+        $databasePlatform = $this->connection->getDatabasePlatform()->getName();
+        $this->abortIf($databasePlatform !== 'mysql' && $databasePlatform !== 'postgresql', 'Migration can only be executed safely on \'mysql\' or \'postgres\'.');
 
-        $this->addSql('ALTER TABLE sylius_refund_credit_memo CHANGE issued_at issued_at DATETIME NOT NULL COMMENT \'(DC2Type:datetime_immutable)\'');
+        if ($databasePlatform === 'mysql') {
+            $this->addSql('ALTER TABLE sylius_refund_credit_memo CHANGE issued_at issued_at DATETIME NOT NULL COMMENT \'(DC2Type:datetime_immutable)\'');
+        } elseif ($databasePlatform === 'postgresql') {
+            $this->addSql('ALTER TABLE sylius_refund_credit_memo ALTER COLUMN issued_at TYPE TIMESTAMP(0) WITHOUT TIME ZONE');
+            $this->addSql('ALTER TABLE sylius_refund_credit_memo ALTER COLUMN issued_at SET NOT NULL');
+            $this->addSql('COMMENT ON COLUMN sylius_refund_credit_memo.issued_at IS \'(DC2Type:datetime_immutable)\'');
+        }
     }
 
     public function down(Schema $schema): void
     {
-        $this->abortIf($this->connection->getDatabasePlatform()->getName() !== 'mysql', 'Migration can only be executed safely on \'mysql\'.');
+        $databasePlatform = $this->connection->getDatabasePlatform()->getName();
+        $this->abortIf($databasePlatform !== 'mysql' && $databasePlatform !== 'postgresql', 'Migration can only be executed safely on \'mysql\' or \'postgres\'.');
 
-        $this->addSql('ALTER TABLE sylius_refund_credit_memo CHANGE issued_at issued_at DATETIME NOT NULL');
+        if ($databasePlatform === 'mysql') {
+            $this->addSql('ALTER TABLE sylius_refund_credit_memo CHANGE issued_at issued_at DATETIME NOT NULL');
+        } elseif ($databasePlatform === 'postgresql') {
+            $this->addSql('ALTER TABLE sylius_refund_credit_memo ALTER COLUMN issued_at TYPE TIMESTAMP WITHOUT TIME ZONE, ALTER COLUMN issued_at SET NOT NULL');
+        }
     }
 }
